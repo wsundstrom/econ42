@@ -1,0 +1,135 @@
+---
+title: ''
+output:
+  html_document:
+    fig_height: 4
+    fig_width: 5
+    highlight: textmate
+    theme: cerulean
+  word_document: default
+---
+
+```{r, echo=FALSE, message=F, warning=F  }
+
+#==============================================================================
+#   This chunk is for every assignment: Modify line #24, then skip to line #79
+#==============================================================================
+
+  # Clear the working space
+    rm(list = ls())
+  
+  # The following is the path to your desired working directory:
+  # Change just this command line (#24) and then skip down to line #79
+  
+    MyDir <- "/your path/Econ42"
+  
+### Leave the rest of this chunk alone, unless you need to add a package
+  
+  # Sundstrom directory (leave this alone!)
+    SundstromDir <- "/Users/wsundstrom/Dropbox/econ_42/files42/data"
+  
+  # Choose correct working directory and proceed
+    if (file.exists(SundstromDir)){
+      WorkDir = SundstromDir
+    } else {
+      WorkDir = MyDir
+    }
+    
+  # Set working directory 
+    setwd(WorkDir)
+  
+### Load the packages (all must have been installed)
+    
+    library(AER)
+    library(car)
+    library(countrycode)
+    library(doBy)
+    library(dplyr)
+    library(foreign)
+    library(gdata)
+    library(ggplot2)
+    library(knitr)
+    library(lmtest)
+    library(openintro)
+    library(OIdata)
+    library(readstata13)
+    library(reshape)
+    library(sandwich)
+    library(stargazer)
+    library(WDI)
+    library(XML)
+
+  ### More settings
+  
+  # turn off scientific notation except for big numbers
+    options(scipen = 9)
+  # set font size for qplot (default is 12)
+    theme_set(theme_gray(base_size = 12))
+  
+  # function to calculate corrected SEs for OLS regression 
+    cse <- function(reg) {
+      rob = sqrt(diag(vcovHC(reg, type = "HC1")))
+      return(rob)
+    }
+  
+```
+
+<base target="_top"/>
+  
+ECON 42 Lab Assignment #1
+
+[Your name]
+
+[Date]    
+
+*** 
+  
+### Getting started with R 
+  
+This document is a _script_ for __R Markdown__, which you are editing with __RStudio__. When you run it, the statistical program __R__ will load the data and crunch the numbers per your instructions, and R Markdown will incorporate the results with your write-up into a single report. This means your work is 100% reproducible. To do your labs, you will edit and run scripts like this one and submit both the script and the HTML file containing the results. 
+
+Scroll down and take a look through the whole script. Don't worry if a lot of it seems mysterious right now. 
+
+The script contains both text and lines of R code to run the statistical analysis. The lines of R code are in blocks or "chunks" which begin and end with three single back quotes:  \```\. In your editor the R chunks can be distinguished by a light gray background. The text can be formatted in a variety of ways: _italics_, __bold__, etc. You'll see how it works when you run it.
+
+To show a couple of examples, I have included a chunk of R code that will do the following:  
+
+* Read data on California school districts, _caschool_, which we will use throughout ECON 41/42.  
+* Create a scatter plot of average test scores against average annual per capita income, where each circle represents a school district.  
+* Run two regressions and report the results in a table.  
+
+At the beginning of the chunk you will see the option ```echo=T```. That means that the code itself will be printed in your document, along with the results. At least for now, I want you to do this in all your assignments, so I can see your code. Later in the course we can set ```ECHO=F```, which will make your homework reports much more readable. 
+
+```{r, message=F, warning=F, comment=NA, echo=T}
+
+#==============================================================================
+#   Data section
+#==============================================================================
+
+  # Data input using read.dta (from Stock & Watson textbook site)
+  caschool <- read.dta("http://wps.aw.com/wps/media/objects/11422/11696965/datasets3e/datasets/caschool.dta")
+  # Read csv spreadsheet data from course github site
+  acs <- read.csv("https://raw.githubusercontent.com/wsundstrom/econ42/master/data/acs_2013_data.csv")
+
+#==============================================================================
+#   Analysis section
+#==============================================================================
+  
+  # scatter plot of test score against log of income in district
+  ggplot(caschool, aes(x=avginc, y=testscr)) + 
+    labs(y = "Test score", x = "Average income" , title = "CA test scores") +
+    geom_point(shape=1) +           # use hollow circles
+    geom_smooth(method=lm, se=F)    # add regression line
+
+  # regressions
+  reg1 <- lm(testscr ~ avginc , data = caschool)  
+  reg2 <- lm(testscr ~ avginc + str , data = caschool) 
+  
+  # regression table
+  stargazer(reg1, reg2, 
+            se=list(cse(reg1), cse(reg2)),
+            title="Table 1: Test score regressions", type="text", 
+            column.labels=c("Simple", "Multiple"),
+            df=FALSE, digits=2)
+
+``` 
